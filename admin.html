@@ -149,8 +149,9 @@
         </div>
         <nav>
             <a href="#" class="nav-link active" id="btnOrders"><i class="fa-solid fa-shopping-basket"></i> Orders</a>
+            <a href="#" class="nav-link" id="btnMenu"><i class="fa-solid fa-utensils"></i> Manage Menu</a>
+            <a href="#" class="nav-link" id="btnCoupons"><i class="fa-solid fa-ticket"></i> Coupons</a>
             <a href="#" class="nav-link" id="btnCustomers"><i class="fa-solid fa-users"></i> Customers</a>
-            <!-- Manage Menu, Settings etc could be here -->
         </nav>
     </div>
 
@@ -171,7 +172,11 @@
         </div>
 
         <section id="ordersSection">
-            <h2 style="margin-bottom: 1.5rem;">Live Orders</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Live Orders</h2>
+                <button class="primary-btn" onclick="clearOrders()"
+                    style="padding: 0.5rem 1rem; font-size: 0.8rem; background: #666;">Clear All</button>
+            </div>
             <div class="order-table-container">
                 <table>
                     <thead>
@@ -180,12 +185,99 @@
                             <th>Customer</th>
                             <th>Items</th>
                             <th>Total</th>
-                            <th>Status</th>
+                            <th>Status/Tracking</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="ordersTableBody">
                         <!-- Orders will be injected -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Menu Management Section -->
+        <section id="menuSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Manage Menu</h2>
+                <button class="primary-btn" onclick="showProductForm()">+ Add New Item</button>
+            </div>
+            <div class="order-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menuTableBody">
+                        <!-- Products will be injected -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Product Form Modal -->
+        <div id="productModal" class="overlay hidden" style="background: rgba(0,0,0,0.8);">
+            <div class="overlay-content" style="max-width: 500px; margin: auto; height: auto; border-radius: 20px;">
+                <div class="overlay-header">
+                    <h2 id="modalTitle">Add Product</h2>
+                    <button onclick="hideProductModal()" class="close-btn">&times;</button>
+                </div>
+                <form id="productForm">
+                    <input type="hidden" id="editProductId">
+                    <div class="input-group">
+                        <label>Item Name</label>
+                        <input type="text" id="itemName" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Category</label>
+                        <select id="itemCategory"
+                            style="width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid #ddd;">
+                            <option value="veg">Veg</option>
+                            <option value="non-veg">Non-Veg</option>
+                            <option value="sides">Sides</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Price (₹)</label>
+                        <input type="number" id="itemPrice" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Image URL</label>
+                        <input type="text" id="itemImage" placeholder="Paste image link or upload below">
+                        <input type="file" id="itemFile" accept="image/*" style="margin-top: 10px;">
+                    </div>
+                    <div class="input-group">
+                        <label>Description</label>
+                        <textarea id="itemDesc" required></textarea>
+                    </div>
+                    <button type="submit" class="primary-btn full-width">Save Product</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Coupons Section -->
+        <section id="couponsSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2>Discount Coupons</h2>
+                <button class="primary-btn" onclick="showCouponForm()">+ Add Coupon</button>
+            </div>
+            <div class="order-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Discount (%)</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="couponsTableBody">
+                        <!-- Coupons will be injected -->
                     </tbody>
                 </table>
             </div>
