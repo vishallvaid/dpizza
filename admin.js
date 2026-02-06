@@ -4,12 +4,30 @@ const DEFAULT_MENU = [
     { id: 2, name: 'Farmhouse', category: 'veg', price: 449, desc: 'Delightful combination of onion, capsicum, tomato & mushroom', image: 'https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?auto=format&fit=crop&w=500&q=80' }
 ];
 
-document.addEventListener('DOMContentLoaded', () => {
+// Safety wrapper for JSON parse
+function safeParse(key, fallback = []) {
+    try {
+        const val = localStorage.getItem(key);
+        return val ? JSON.parse(val) : fallback;
+    } catch (e) {
+        console.error(`Error parsing ${key}:`, e);
+        return fallback;
+    }
+}
+
+function initApp() {
+    console.log("Initializing Admin App...");
     initMenu();
     loadDashboard();
     setupAdminNav();
     setupProductForm();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 function initMenu() {
     if (!localStorage.getItem('dpizza_menu')) {
@@ -26,31 +44,51 @@ function setupAdminNav() {
     };
 
     Object.entries(navItems).forEach(([btnId, sectionId]) => {
-        document.getElementById(btnId).addEventListener('click', (e) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) {
+            console.warn(`Nav button ${btnId} not found`);
+            return;
+        }
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log(`Switching to section: ${sectionId}`);
+
             // Update Active Nav
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById(btnId).classList.add('active');
+            btn.classList.add('active');
 
             // Show Section
-            Object.values(navItems).forEach(s => document.getElementById(s).classList.add('hidden'));
-            document.getElementById(sectionId).classList.remove('hidden');
+            Object.values(navItems).forEach(s => {
+                const sec = document.getElementById(s);
+                if (sec) sec.classList.add('hidden');
+            });
+
+            const targetSec = document.getElementById(sectionId);
+            if (targetSec) targetSec.classList.remove('hidden');
 
             // Specific Loaders
             if (sectionId === 'menuSection') loadMenu();
             if (sectionId === 'customersSection') loadCustomers();
             if (sectionId === 'couponsSection') loadCoupons();
+            if (sectionId === 'ordersSection') loadDashboard();
         });
     });
 }
 
 // --- ORDER MANAGEMENT ---
 function loadDashboard() {
-    const history = JSON.parse(localStorage.getItem('dpizza_history')) || [];
-    document.getElementById('totalOrders').innerText = history.length;
-    document.getElementById('totalSales').innerText = `₹${history.reduce((sum, o) => sum + o.total, 0)}`;
-    document.getElementById('totalCustomers').innerText = new Set(history.map(o => o.phone)).size;
+    const history = safeParse('dpizza_history');
+    const totalOrdersEl = document.getElementById('totalOrders');
+    const totalSalesEl = document.getElementById('totalSales');
+    const totalCustomersEl = document.getElementById('totalCustomers');
+
+    if (totalOrdersEl) totalOrdersEl.innerText = history.length;
+    if (totalSalesEl) totalSalesEl.innerText = `₹${history.reduce((sum, o) => sum + (o.total || 0), 0)}`;
+    if (totalCustomersEl) totalCustomersEl.innerText = new Set(history.map(o => o.phone)).size;
 
     const tableBody = document.getElementById('ordersTableBody');
+    if (!tableBody) return;
     tableBody.innerHTML = '';
 
     [...history].reverse().forEach(order => {
@@ -58,7 +96,7 @@ function loadDashboard() {
         tr.innerHTML = `
             <td>#${order.id}</td>
             <td><strong>${order.name}</strong><br><small>${order.phone}</small></td>
-            <td>${order.items.map(i => `${i.name} x${i.quantity}`).join(', ')}</td>
+            <td>${(order.items || []).map(i => `${i.name} x${i.quantity}`).join(', ')}</td>
             <td>₹${order.total}</td>
             <td><span class="status-badge status-${order.status || 'pending'}">${order.status || 'pending'}</span></td>
             <td>
@@ -76,7 +114,7 @@ function loadDashboard() {
 }
 
 window.updateStatus = (orderId, newStatus) => {
-    let history = JSON.parse(localStorage.getItem('dpizza_history')) || [];
+    let history = safeParse('dpizza_history');
     const index = history.findIndex(o => o.id === orderId);
     if (index !== -1) {
         history[index].status = newStatus;
@@ -94,8 +132,9 @@ window.clearOrders = () => {
 
 // --- MENU MANAGEMENT ---
 function loadMenu() {
-    const menu = JSON.parse(localStorage.getItem('dpizza_menu')) || [];
+    const menu = safeParse('dpizza_menu', DEFAULT_MENU);
     const tbody = document.getElementById('menuTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     menu.forEach(item => {
@@ -116,23 +155,26 @@ function loadMenu() {
 
 function setupProductForm() {
     const form = document.getElementById('productForm');
+    if (!form) return;
+
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const menu = JSON.parse(localStorage.getItem('dpizza_menu')) || [];
+        const menu = safeParse('dpizza_menu', DEFAULT_MENU);
         const editId = document.getElementById('editProductId').value;
+        const name = document.getElementById('itemName').value;
+        const price = parseInt(document.getElementById('itemPrice').value);
+        const category = document.getElementById('itemCategory').value;
+        const image = document.getElementById('itemImage').value || 'https://via.placeholder.com/500x350?text=Pizza';
+        const desc = document.getElementById('itemDesc').value;
 
         const newItem = {
             id: editId ? parseInt(editId) : Date.now(),
-            name: document.getElementById('itemName').value,
-            category: document.getElementById('itemCategory').value,
-            price: parseInt(document.getElementById('itemPrice').value),
-            image: document.getElementById('itemImage').value || 'https://via.placeholder.com/500x350?text=Pizza',
-            desc: document.getElementById('itemDesc').value
+            name, category, price, image, desc
         };
 
         if (editId) {
             const index = menu.findIndex(i => i.id === parseInt(editId));
-            menu[index] = newItem;
+            if (index !== -1) menu[index] = newItem;
         } else {
             menu.push(newItem);
         }
@@ -140,34 +182,40 @@ function setupProductForm() {
         localStorage.setItem('dpizza_menu', JSON.stringify(menu));
         hideProductModal();
         loadMenu();
+        alert("Product saved successfully!");
     });
 
-    // Handle File Upload Shortcut
-    document.getElementById('itemFile').addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                document.getElementById('itemImage').value = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    const fileInput = document.getElementById('itemFile');
+    if (fileInput) {
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    document.getElementById('itemImage').value = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 }
 
 window.showProductForm = () => {
+    const form = document.getElementById('productForm');
+    if (form) form.reset();
     document.getElementById('modalTitle').innerText = 'Add Product';
-    document.getElementById('productForm').reset();
     document.getElementById('editProductId').value = '';
-    document.getElementById('productModal').classList.remove('hidden');
+    const modal = document.getElementById('productModal');
+    if (modal) modal.classList.remove('hidden');
 };
 
 window.hideProductModal = () => {
-    document.getElementById('productModal').classList.add('hidden');
+    const modal = document.getElementById('productModal');
+    if (modal) modal.classList.add('hidden');
 };
 
 window.editProduct = (id) => {
-    const menu = JSON.parse(localStorage.getItem('dpizza_menu')) || [];
+    const menu = safeParse('dpizza_menu', DEFAULT_MENU);
     const item = menu.find(i => i.id === id);
     if (item) {
         document.getElementById('modalTitle').innerText = 'Edit Product';
@@ -177,13 +225,14 @@ window.editProduct = (id) => {
         document.getElementById('itemImage').value = item.image;
         document.getElementById('itemDesc').value = item.desc;
         document.getElementById('editProductId').value = item.id;
-        document.getElementById('productModal').classList.remove('hidden');
+        const modal = document.getElementById('productModal');
+        if (modal) modal.classList.remove('hidden');
     }
 };
 
 window.deleteProduct = (id) => {
     if (confirm('Delete this item?')) {
-        let menu = JSON.parse(localStorage.getItem('dpizza_menu')) || [];
+        let menu = safeParse('dpizza_menu', DEFAULT_MENU);
         menu = menu.filter(i => i.id !== id);
         localStorage.setItem('dpizza_menu', JSON.stringify(menu));
         loadMenu();
@@ -192,8 +241,9 @@ window.deleteProduct = (id) => {
 
 // --- COUPON MANAGEMENT ---
 function loadCoupons() {
-    const coupons = JSON.parse(localStorage.getItem('dpizza_coupons')) || [];
+    const coupons = safeParse('dpizza_coupons');
     const tbody = document.getElementById('couponsTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     coupons.forEach(c => {
@@ -214,7 +264,7 @@ window.showCouponForm = () => {
     const code = prompt('Enter Coupon Code (e.g. PIZZA50):');
     const discount = prompt('Enter Discount Percentage (e.g. 10):');
     if (code && discount) {
-        let coupons = JSON.parse(localStorage.getItem('dpizza_coupons')) || [];
+        let coupons = safeParse('dpizza_coupons');
         coupons.push({ code: code.toUpperCase(), discount: parseInt(discount), active: true });
         localStorage.setItem('dpizza_coupons', JSON.stringify(coupons));
         loadCoupons();
@@ -222,29 +272,33 @@ window.showCouponForm = () => {
 };
 
 window.deleteCoupon = (code) => {
-    let coupons = JSON.parse(localStorage.getItem('dpizza_coupons')) || [];
-    coupons = coupons.filter(c => c.code !== code);
-    localStorage.setItem('dpizza_coupons', JSON.stringify(coupons));
-    loadCoupons();
+    if (confirm(`Delete coupon ${code}?`)) {
+        let coupons = safeParse('dpizza_coupons');
+        coupons = coupons.filter(c => c.code !== code);
+        localStorage.setItem('dpizza_coupons', JSON.stringify(coupons));
+        loadCoupons();
+    }
 };
 
 // --- CUSTOMERS ---
 function loadCustomers() {
-    const history = JSON.parse(localStorage.getItem('dpizza_history')) || [];
+    const history = safeParse('dpizza_history');
     const customersMap = {};
     history.forEach(order => {
+        if (!order.phone) return;
         if (!customersMap[order.phone]) {
             customersMap[order.phone] = { name: order.name, phone: order.phone, lastAddress: order.address, count: 0, ltv: 0 };
         }
         customersMap[order.phone].count++;
-        customersMap[order.phone].ltv += order.total;
+        customersMap[order.phone].ltv += (order.total || 0);
     });
 
     const tbody = document.getElementById('customersTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     Object.values(customersMap).forEach(cust => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${cust.name}</td><td>${cust.phone}</td><td>${cust.lastAddress}</td><td>${cust.count}</td><td>₹${cust.ltv}</td>`;
+        tr.innerHTML = `<td>${cust.name}</td><td>${cust.phone}</td><td title="${cust.lastAddress}">${cust.lastAddress}</td><td>${cust.count}</td><td>₹${cust.ltv}</td>`;
         tbody.appendChild(tr);
     });
 }
