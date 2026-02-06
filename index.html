@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DPizza | Premium Pizza Delivery</title>
+    <meta name="description" content="Order the best pizzas in town with DPizza. No login, lightning fast delivery.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🍕</span>
+                <span class="logo-text">DPizza</span>
+            </div>
+            <div class="header-actions">
+                <button id="profileBtn" class="icon-btn hidden" title="My Profile">
+                    <i class="fa-solid fa-user-circle"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main id="mainContent">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="hero-content">
+                    <h1>Hot & Fresh <br><span class="highlight">Delivered Fast.</span></h1>
+                    <p>No account needed. Just pick and eat.</p>
+                </div>
+            </section>
+
+            <!-- Categories -->
+            <div class="categories-wrapper">
+                <div class="categories" id="categories">
+                    <button class="cat-chip active" data-category="all">All</button>
+                    <button class="cat-chip" data-category="veg">Veg</button>
+                    <button class="cat-chip" data-category="non-veg">Non-Veg</button>
+                    <button class="cat-chip" data-category="sides">Sides</button>
+                </div>
+            </div>
+
+            <!-- Menu Grid -->
+            <section class="menu-section">
+                <div id="menuGrid" class="menu-grid">
+                    <!-- Loading skeleton or items will be injected here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Profile View (Hidden by default) -->
+        <div id="profileView" class="page-view hidden">
+            <div class="page-header">
+                <button class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>My Profile</h2>
+            </div>
+            <div class="profile-card">
+                <div class="profile-info">
+                    <h3 id="profName">...</h3>
+                    <p id="profPhone">...</p>
+                    <p id="profAddress" class="small">...</p>
+                </div>
+            </div>
+            <div class="history-section">
+                <h3>Order History</h3>
+                <div id="orderHistory" class="history-list">
+                    <!-- History items -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Sidebar/Overlay -->
+        <div id="cartOverlay" class="overlay hidden">
+            <div class="overlay-content">
+                <div class="overlay-header">
+                    <h2>Your Order</h2>
+                    <button id="closeCart" class="close-btn">&times;</button>
+                </div>
+                <div id="cartItems" class="cart-items">
+                    <!-- Cart items -->
+                </div>
+                <div class="checkout-footer">
+                    <div class="total-bar">
+                        <span>Total</span>
+                        <span id="cartTotal">₹0</span>
+                    </div>
+                    <button id="checkoutBtn" class="primary-btn full-width">Proceed to Checkout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Form View -->
+        <div id="checkoutView" class="page-view hidden">
+            <div class="page-header">
+                <button class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
+                <h2>Checkout</h2>
+            </div>
+            <form id="orderForm" class="delivery-form">
+                <div class="form-section">
+                    <h3>Delivery Details</h3>
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" name="name" id="userName" placeholder="John Doe" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Mobile Number</label>
+                        <input type="tel" name="phone" id="userPhone" placeholder="9876543210" pattern="[0-9]{10}" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Full Address</label>
+                        <textarea name="address" id="userAddress" placeholder="House No, Street Name..." required></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Landmark</label>
+                        <input type="text" name="landmark" id="userLandmark" placeholder="Near Apollo Hospital" required>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Payment Method</h3>
+                    <div class="payment-options">
+                        <label class="payment-card">
+                            <input type="radio" name="payment" value="cod" checked>
+                            <div class="card-content">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                <span>Cash on Delivery</span>
+                            </div>
+                        </label>
+                        <label class="payment-card">
+                            <input type="radio" name="payment" value="online">
+                            <div class="card-content">
+                                <i class="fa-solid fa-credit-card"></i>
+                                <span>UPI / Card</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="primary-btn full-width mt-2">Place Order</button>
+            </form>
+        </div>
+
+        <!-- Success View -->
+        <div id="successView" class="page-view hidden">
+            <div class="success-screen">
+                <div class="success-icon">✅</div>
+                <h2>Order Placed!</h2>
+                <p>Sit back and relax. Your pizza is on its way.</p>
+                <div class="order-summary-box">
+                    <p>Order ID: <span id="successOrderId">#...</span></p>
+                </div>
+                <button id="homeBtn" class="secondary-btn">Back to Menu</button>
+            </div>
+        </div>
+
+        <!-- Floating Cart FAB -->
+        <div id="cartFab" class="cart-fab hidden">
+            <div class="cart-info">
+                <span id="fabCount">0</span> Items
+                <span class="separator">|</span>
+                <span id="fabTotal">₹0</span>
+            </div>
+            <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Version 9+) -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
